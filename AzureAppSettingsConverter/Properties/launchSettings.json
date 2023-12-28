@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "AzureAppSettingsConverter": {
+      "commandName": "Project",
+      "commandLineArgs": ""
+    }
+  }
+}
