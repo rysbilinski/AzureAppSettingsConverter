@@ -1,4 +1,4 @@
-﻿// See https://aka.ms/new-console-template for more information
+﻿using System.Diagnostics;
 using System.Text.Json;
 
 Console.WriteLine($"This app converts a configuration dump from Azure App Service (advance edit), into a nested appsettings.json file.{Environment.NewLine}{Environment.NewLine}");
@@ -7,34 +7,44 @@ var filePath = string.Empty;
 
 while(string.IsNullOrEmpty(filePath))
 {
-    filePath = args.Length == 1 ? args[0] : string.Empty;
-
-    if (string.IsNullOrEmpty(filePath))
+    try
     {
-        Console.WriteLine("Please enter the path to the Azure App Service configuration file.");
-        filePath = Console.ReadLine();
-    }
+        filePath = args.Length == 1 ? args[0] : string.Empty;
 
-    if (!File.Exists(filePath))
+        if (string.IsNullOrEmpty(filePath))
+        {
+            Console.WriteLine("Please enter the path to the Azure App Service configuration file.");
+            filePath = Console.ReadLine();
+        }
+
+        if (!File.Exists(filePath))
+        {
+            Console.WriteLine("File does not exist.");
+            filePath = string.Empty;
+            args = [];
+            continue;
+        }
+
+        var appServiceConfig = GetAzureAppServiceConfiguration(filePath);
+
+        var appSettingsJson = ConvertToAppSettingsJson(appServiceConfig);
+
+        // get the directory from the filepath
+        var directory = Path.GetDirectoryName(filePath);
+        var newFilepath = $"{directory}/appsettings.json";
+
+
+        File.WriteAllText(newFilepath, appSettingsJson);
+        Console.WriteLine($"appsettings.json file created successfully in {directory}");
+
+        Process.Start("notepad.exe", newFilepath);
+    }
+    catch (Exception ex)
     {
-        Console.WriteLine("File does not exist.");
-        filePath = string.Empty;
-        args = [];
-        continue;
+        Console.WriteLine($"An error occurred: {Environment.NewLine}{Environment.NewLine}{ex.Message}");
     }
-
-    var appServiceConfig = GetAzureAppServiceConfiguration(filePath);
-
-    var appSettingsJson = ConvertToAppSettingsJson(appServiceConfig);
-
-    // get the directory from the filepath
-    var directory = Path.GetDirectoryName(filePath);
-    
-    
-    File.WriteAllText($"{directory}/appsettings.json", appSettingsJson);
-    Console.WriteLine($"appsettings.json file created successfully in {directory}");
 }
-       
+
 
 
 static Dictionary<string, string> GetAzureAppServiceConfiguration(string filePath)
